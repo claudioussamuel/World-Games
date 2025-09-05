@@ -1,0 +1,6 @@
+# Privy Configuration
+
+NEXT_PUBLIC_PRIVY_APP_ID=cm6kv74hr0140cs70eomjoe8y
+
+# Optional: Custom domain for authentication
+# NEXT_PUBLIC_PRIVY_CUSTOM_DOMAIN=your-custom-domain.com
