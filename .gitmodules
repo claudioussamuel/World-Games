@@ -4,3 +4,6 @@
 [submodule "worlds/lib/openzeppelin-contracts"]
 	path = worlds/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "worlds/lib/foundry-devops"]
+	path = worlds/lib/foundry-devops
+	url = https://github.com/cyfrin/foundry-devops
