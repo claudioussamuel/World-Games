@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { BootScene } from './game/scenes/boot-scene';
 import { GameScene } from './game/scenes/game-scene';
 import { PreloadScene } from './game/scenes/preload-scene';
+import { FighterSelection } from './game/scenes/FighterSelection';
 
 export interface IRefPhaserGame
 {
@@ -55,7 +56,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                         debug: false,
                     },
                 },
-                scene: [BootScene, PreloadScene, GameScene]
+                scene: [BootScene, PreloadScene, FighterSelection, GameScene]
             });
 
             gameInstance.current = game.current.scene.getScene('BootScene') || undefined;

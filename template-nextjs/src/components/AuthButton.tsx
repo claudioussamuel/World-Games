@@ -1,11 +1,53 @@
 'use client';
 
 import { usePrivy } from '@privy-io/react-auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNftCheck } from '../hooks/useNftCheck';
+import { EventBus } from '../game/EventBus';
 
 export default function AuthButton() {
   const { ready, authenticated, user, login, logout } = usePrivy();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check NFT ownership
+  const { hasNft, isChecking, error } = useNftCheck(user?.wallet?.address);
+
+  // Notify game about authentication status
+  useEffect(() => {
+    console.log('AuthButton: Authentication status changed', { authenticated, user: !!user });
+    if (authenticated) {
+      console.log('AuthButton: Emitting user-authenticated event');
+      EventBus.emit('user-authenticated', { authenticated, user });
+    } else {
+      console.log('AuthButton: Emitting user-logged-out event');
+      EventBus.emit('user-logged-out', { authenticated: false });
+    }
+  }, [authenticated, user]);
+
+  // Listen for auth status requests from the game
+  useEffect(() => {
+    const handleAuthStatusRequest = () => {
+      console.log('AuthButton: Received auth status request, current status:', { authenticated, user: !!user });
+      if (authenticated) {
+        EventBus.emit('user-authenticated', { authenticated, user });
+      } else {
+        EventBus.emit('user-logged-out', { authenticated: false });
+      }
+    };
+
+    EventBus.on('request-auth-status', handleAuthStatusRequest);
+    
+    return () => {
+      EventBus.off('request-auth-status', handleAuthStatusRequest);
+    };
+  }, [authenticated, user]);
+
+  // Notify game about NFT ownership status
+  useEffect(() => {
+    if (authenticated && user?.wallet?.address) {
+      EventBus.emit('nft-ownership-updated', { hasNft, isChecking, error });
+    }
+  }, [authenticated, user?.wallet?.address, hasNft, isChecking, error]);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -65,6 +107,19 @@ export default function AuthButton() {
             {user.email && `Email: ${user.email}`}
             {user.wallet && `Wallet: ${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}`}
           </p>
+          {isChecking ? (
+            <p style={{ margin: '0.25rem 0 0 0', color: '#666', fontSize: '0.7rem' }}>
+              Checking NFT ownership...
+            </p>
+          ) : hasNft ? (
+            <p style={{ margin: '0.25rem 0 0 0', color: '#4caf50', fontSize: '0.7rem' }}>
+              ✈️ Fighter Jet NFT: Owned
+            </p>
+          ) : (
+            <p style={{ margin: '0.25rem 0 0 0', color: '#f44336', fontSize: '0.7rem' }}>
+              ✈️ Fighter Jet NFT: Not Owned
+            </p>
+          )}
         </div>
         <button
           onClick={handleLogout}

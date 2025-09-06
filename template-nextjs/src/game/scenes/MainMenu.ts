@@ -8,6 +8,7 @@ export class MainMenu extends Scene
     logo: GameObjects.Image;
     title: GameObjects.Text;
     logoTween: Phaser.Tweens.Tween | null;
+    playButton: GameObjects.Text;
 
     constructor ()
     {
@@ -26,6 +27,16 @@ export class MainMenu extends Scene
             align: 'center'
         }).setOrigin(0.5).setDepth(100);
 
+        // Play button
+        this.playButton = this.add.text(512, 550, 'Select Fighter', {
+            fontFamily: 'Arial Black', fontSize: 32, color: '#ffffff',
+            stroke: '#000000', strokeThickness: 6,
+            align: 'center'
+        }).setOrigin(0.5).setDepth(100);
+
+        this.playButton.setInteractive({ useHandCursor: true });
+        this.playButton.on('pointerdown', () => this.changeScene());
+
         EventBus.emit('current-scene-ready', this);
     }
     
@@ -37,7 +48,8 @@ export class MainMenu extends Scene
             this.logoTween = null;
         }
 
-        this.scene.start('Game');
+        // Go directly to fighter selection
+        this.scene.start('FighterSelection');
     }
 
     moveLogo (reactCallback: ({ x, y }: { x: number, y: number }) => void)
