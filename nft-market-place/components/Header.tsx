@@ -62,9 +62,9 @@ export default function Header() {
                 >
                     {authenticated ? "Disconnect" : "Connect"}
                 </button>
-                {authenticated && user && (
+                {authenticated && user && user.wallet?.address && (
                     <div className="text-xs text-zinc-600">
-                        {user.wallet?.address ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}` : "Connected"}
+                        {user.wallet.address.slice(0, 6)}...{user.wallet.address.slice(-4)}
                     </div>
                 )}
             </div>
