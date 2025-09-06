@@ -1,7 +1,7 @@
 // Base Sepolia Contract Addresses
 export const CONTRACT_ADDRESSES = {
     nftMarketplace: "0x57e0839e2232468eEb5e58BC3fA25157540E487D",
-    craftNft: "`0xA5245D1E3b2A8b35c3D1da67E3c6FdB79164747B`",
+    craftNft: "`0x44Da9c385923e1A5d4eae81C99a4183DD2a86158`",
     usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
 } as const
 

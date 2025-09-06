@@ -14,7 +14,15 @@ interface NFTContractFormProps {
 }
 
 export default function NFTContractForm({ contractAddress }: NFTContractFormProps) {
-    const { user } = usePrivy()
+    // Check if Privy is available
+    const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+    let user = null
+    
+    // Only use Privy hooks if app ID is available
+    if (privyAppId) {
+        const privy = usePrivy()
+        user = privy.user
+    }
     const { 
         currentChain, 
         readContract, 

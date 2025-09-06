@@ -19,8 +19,20 @@ const getRpcUrl = () => {
 };
 
 export function useViemWithPrivy() {
-    const { user, authenticated } = usePrivy();
-    const { wallets } = useWallets();
+    // Check if Privy is available
+    const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+    let user = null
+    let authenticated = false
+    let wallets: any[] = []
+    
+    // Only use Privy hooks if app ID is available
+    if (privyAppId) {
+        const privy = usePrivy()
+        const walletData = useWallets()
+        user = privy.user
+        authenticated = privy.authenticated
+        wallets = walletData.wallets
+    }
 
     // Always use Base Sepolia
     const currentChain = baseSepolia;

@@ -6,7 +6,18 @@ import { usePrivy } from "@privy-io/react-auth"
 import ListNftForm from "@/components/ListNftForm"
 
 export default function ListNftPage() {
-    const { authenticated, user } = usePrivy()
+    // Check if Privy is available
+    const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+    let authenticated = false
+    let user = null
+    
+    // Only use Privy hooks if app ID is available
+    if (privyAppId) {
+        const privy = usePrivy()
+        authenticated = privy.authenticated
+        user = privy.user
+    }
+    
     const chainSupported = user?.wallet?.address
    
     return (
@@ -18,7 +29,16 @@ export default function ListNftPage() {
                     </h1>
 
                     {/* Connection Status */}
-                    {!authenticated ? (
+                    {!privyAppId ? (
+                        <div className="p-8 bg-white rounded-xl shadow-sm border border-zinc-200 text-center">
+                            <p className="text-lg text-zinc-600 mb-4">
+                                Privy app ID not configured
+                            </p>
+                            <p className="text-sm text-zinc-500">
+                                Please set NEXT_PUBLIC_PRIVY_APP_ID environment variable
+                            </p>
+                        </div>
+                    ) : !authenticated ? (
                         <div className="p-8 bg-white rounded-xl shadow-sm border border-zinc-200 text-center">
                             <p className="text-lg text-zinc-600 mb-4">
                                 Connect your wallet to list your NFT

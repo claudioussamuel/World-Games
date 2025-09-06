@@ -14,7 +14,18 @@ export default function BuyNftPage() {
         contractAddress: string
         tokenId: string
     }
-    const { authenticated, user } = usePrivy()
+    
+    // Check if Privy is available
+    const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+    let authenticated = false
+    let user = null
+    
+    // Only use Privy hooks if app ID is available
+    if (privyAppId) {
+        const privy = usePrivy()
+        authenticated = privy.authenticated
+        user = privy.user
+    }
     const { 
         address, 
         currentChain, 
@@ -157,7 +168,16 @@ export default function BuyNftPage() {
                 <div className="max-w-4xl mx-auto">
                     <h1 className="text-3xl font-bold mb-6 text-gray-700">Buy NFT</h1>
 
-                    {!authenticated ? (
+                    {!privyAppId ? (
+                        <div className="p-8 bg-white rounded-xl shadow-sm border border-zinc-200 text-center">
+                            <p className="text-lg text-zinc-600 mb-4">
+                                Privy app ID not configured
+                            </p>
+                            <p className="text-sm text-zinc-500">
+                                Please set NEXT_PUBLIC_PRIVY_APP_ID environment variable
+                            </p>
+                        </div>
+                    ) : !authenticated ? (
                         <div className="p-8 bg-white rounded-xl shadow-sm border border-zinc-200 text-center">
                             <p className="text-lg text-zinc-600 mb-4">
                                 Connect your wallet to purchase this NFT
