@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { usePrivy } from "@privy-io/react-auth"
-import { chainsToContracts, erc20Abi, marketplaceAbi } from "@/constants"
+import { CONTRACT_ADDRESSES, erc20Abi, marketplaceAbi } from "@/constants"
 import NFTBox from "@/components/NFTBox"
 import { useViemWithPrivy } from "@/hooks/useViemWithPrivy"
 
@@ -23,9 +23,8 @@ export default function BuyNftPage() {
         waitForTransactionReceipt 
     } = useViemWithPrivy()
 
-    const marketplaceAddress =
-        (chainsToContracts[currentChain.id]?.nftMarketplace as `0x${string}`) || "0x"
-    const usdcAddress = (chainsToContracts[currentChain.id]?.usdc as `0x${string}`) || "0x"
+    const marketplaceAddress = CONTRACT_ADDRESSES.nftMarketplace as `0x${string}`
+    const usdcAddress = CONTRACT_ADDRESSES.usdc as `0x${string}`
 
     const [step, setStep] = useState(1) // 1: Preview, 2: Approval, 3: Purchase
     
@@ -150,8 +149,7 @@ export default function BuyNftPage() {
     // Check if the current user is the seller
     const isSeller = seller === address
 
-    const chainSupported =
-        currentChain.id in chainsToContracts && chainsToContracts[currentChain.id]?.nftMarketplace !== undefined
+    const chainSupported = currentChain.id === 84532 // Base Sepolia chain ID
 
     return (
         <div className="min-h-screen bg-zinc-50 flex flex-col">
@@ -175,7 +173,7 @@ export default function BuyNftPage() {
                                 network.
                             </p>
                             <p className="text-sm text-zinc-500">
-                                Supported networks: Anvil, Sepolia, Mainnet
+                                Please switch to Base Sepolia network
                             </p>
                         </div>
                     ) : isListingLoading ? (

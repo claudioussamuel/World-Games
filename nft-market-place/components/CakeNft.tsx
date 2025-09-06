@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { RiCakeLine } from "react-icons/ri"
+import { RiToolsLine } from "react-icons/ri"
 import { usePrivy } from "@privy-io/react-auth"
-import { cakeAbi, chainsToContracts } from "@/constants"
+import { craftAbi, CONTRACT_ADDRESSES } from "@/constants"
 import { CgSpinner } from "react-icons/cg"
 import { InputForm } from "./ui/InputField"
 import { useViemWithPrivy } from "@/hooks/useViemWithPrivy"
@@ -19,13 +19,14 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
         currentChain, 
         readContract, 
         writeContract, 
-        waitForTransactionReceipt 
+        waitForTransactionReceipt,
+        getContractInstance
     } = useViemWithPrivy()
 
-    const cakeContractAddress = useMemo(() => {
+    const craftContractAddress = useMemo(() => {
         if (contractAddress) return contractAddress
-        return (chainsToContracts[currentChain.id]?.cakeNft as `0x${string}`) || null
-    }, [currentChain.id, contractAddress])
+        return CONTRACT_ADDRESSES.craftNft as `0x${string}`
+    }, [contractAddress])
 
     const [tokenId, setTokenId] = useState("")
     const [myTokenIds, setMyTokenIds] = useState<string[]>([])
@@ -33,54 +34,69 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
     const [lastMintedTokenId, setLastMintedTokenId] = useState<string | null>(null)
     
     // State for contract interactions
-    const [bakeCakeHash, setBakeCakeHash] = useState<string | null>(null)
-    const [isBakePending, setIsBakePending] = useState(false)
-    const [bakeCakeError, setBakeCakeError] = useState<Error | null>(null)
-    const [isBakeConfirming, setIsBakeConfirming] = useState(false)
-    const [isBakeConfirmed, setIsBakeConfirmed] = useState(false)
-    const [isBakeError, setIsBakeError] = useState(false)
-    const [dataFromBakeReceipt, setDataFromBakeReceipt] = useState<any>(null)
+    const [craftNftHash, setCraftNftHash] = useState<string | null>(null)
+    const [isCraftPending, setIsCraftPending] = useState(false)
+    const [craftNftError, setCraftNftError] = useState<Error | null>(null)
+    const [isCraftConfirming, setIsCraftConfirming] = useState(false)
+    const [isCraftConfirmed, setIsCraftConfirmed] = useState(false)
+    const [isCraftError, setIsCraftError] = useState(false)
+    const [dataFromCraftReceipt, setDataFromCraftReceipt] = useState<any>(null)
     
     // State for tokenURI
     const [tokenURIData, setTokenURIData] = useState<string | null>(null)
     const [isTokenURILoading, setIsTokenURILoading] = useState(false)
     const [tokenURIError, setTokenURIError] = useState<Error | null>(null)
 
-    // Function to bake a cake (mint NFT)
-    async function handleBakeCake() {
-        if (!cakeContractAddress) return
+    // Function to mint a craft NFT (JustPay pattern)
+    async function handleCraftNft() {
+        if (!craftContractAddress) return
         
-        setIsBakePending(true)
-        setBakeCakeError(null)
+        // Check authentication first
+        if (!user || !user.wallet?.address) {
+            setCraftNftError(new Error("Please connect your wallet first"))
+            return
+        }
+        
+        setIsCraftPending(true)
+        setCraftNftError(null)
 
         try {
-            const hash = await writeContract(
-                cakeContractAddress,
-                cakeAbi,
-                "bakeCake",
-                []
+            // Get contract instance using JustPay pattern
+            const contract = await getContractInstance(
+                craftContractAddress,
+                craftAbi
             )
-            setBakeCakeHash(hash)
-            console.log("Bake cake transaction submitted:", hash)
+            
+            if (!contract) {
+                throw new Error("Failed to get contract instance")
+            }
+
+            // Direct contract write call (JustPay pattern)
+            const hash = await contract.write.mint([
+                "https://amber-shrill-camel-588.mypinata.cloud/ipfs/bafkreibdibuhyumnmsmhh3ivlr2omtxlb2euuomvmzkom256b7a5dycx7m" // You can customize this URI
+            ])
+            
+            setCraftNftHash(hash)
+            console.log("Craft NFT transaction submitted:", hash)
             
             // Wait for transaction receipt
-            setIsBakeConfirming(true)
+            setIsCraftConfirming(true)
             const receipt = await waitForTransactionReceipt(hash)
-            setDataFromBakeReceipt(receipt)
+            setDataFromCraftReceipt(receipt)
             
             if (receipt.status === "success") {
-                setIsBakeConfirmed(true)
-                setIsBakeError(false)
+                setIsCraftConfirmed(true)
+                setIsCraftError(false)
             } else {
-                setIsBakeError(true)
+                setIsCraftError(true)
             }
         } catch (error) {
-            console.error("Error baking cake:", error)
-            setBakeCakeError(error as Error)
-            setIsBakeError(true)
+            console.error("Error crafting NFT:", error)
+            setCraftNftError(error as Error)
+            setIsCraftError(true)
         } finally {
-            setIsBakePending(false)
-            setIsBakeConfirming(false)
+            setIsCraftPending(false)
+            setIsCraftConfirming(false)
         }
     }
 
@@ -97,13 +113,13 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
     // Fetch tokenURI when tokenId changes
     useEffect(() => {
         const fetchTokenURI = async () => {
-            if (tokenId && cakeContractAddress) {
+            if (tokenId && craftContractAddress) {
                 try {
                     setIsTokenURILoading(true)
                     setTokenURIError(null)
                     const tokenURI = await readContract(
-                        cakeContractAddress,
-                        cakeAbi,
+                        craftContractAddress,
+                        craftAbi,
                         "tokenURI",
                         [BigInt(tokenId)]
                     )
@@ -117,7 +133,7 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
             }
         }
         fetchTokenURI()
-    }, [tokenId, cakeContractAddress, readContract])
+    }, [tokenId, craftContractAddress, readContract])
 
     // Effect to process tokenURI data when it changes
     useEffect(() => {
@@ -156,63 +172,68 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
 
     // Effect to track the minted NFT from transaction receipt
     useEffect(() => {
-        console.dir(dataFromBakeReceipt)
-        if (isBakeConfirmed && bakeCakeHash) {
-            const hexTokenIdFromReceipt = dataFromBakeReceipt.logs[1].topics[1]
-            const intTokenIdFromReceipt = parseInt(hexTokenIdFromReceipt!, 16)
+        console.dir(dataFromCraftReceipt)
+        if (isCraftConfirmed && craftNftHash) {
+            const hexTokenIdFromReceipt = dataFromCraftReceipt.logs[1].topics[1]
+            const intTokenIdFromReceipt = parseInt(hexTokenIdFromReceipt!, 16) 
             setLastMintedTokenId(`TokenID: ${intTokenIdFromReceipt}`)
         }
-    }, [isBakeConfirmed, bakeCakeHash])
+    }, [isCraftConfirmed, craftNftHash])
 
     // Helper function for button content
-    function getBakeCakeButtonContent() {
-        if (isBakePending)
+    function getCraftNftButtonContent() {
+        if (isCraftPending)
             return (
                 <div className="flex items-center justify-center gap-2 w-full">
                     <CgSpinner className="animate-spin" size={20} />
                     <span>Confirming in wallet...</span>
                 </div>
             )
-        if (isBakeConfirming)
+        if (isCraftConfirming)
             return (
                 <div className="flex items-center justify-center gap-2 w-full">
                     <CgSpinner className="animate-spin" size={20} />
-                    <span>Baking your cake NFT...</span>
+                    <span>Crafting your NFT...</span>
                 </div>
             )
-        if (bakeCakeError || isBakeError) {
-            console.log(bakeCakeError)
+        if (craftNftError || isCraftError) {
+            console.log(craftNftError)
             return (
                 <div className="flex items-center justify-center gap-2 w-full">
-                    <span>Error baking cake, see console.</span>
+                    <span>
+                        {craftNftError?.message?.includes("connect your wallet") 
+                            ? "Please connect your wallet first" 
+                            : "Error crafting NFT, see console."
+                        }
+                    </span>
                 </div>
             )
         }
-        if (isBakeConfirmed) {
-            return "Cake NFT baked successfully!"
+        if (isCraftConfirmed) {
+            return "NFT crafted successfully!"
         }
         return (
             <div className="flex items-center justify-center gap-2">
-                <RiCakeLine size={20} />
-                <span>Bake a Cake NFT</span>
+                <RiToolsLine size={20} />
+                <span>Craft an NFT</span>
             </div>
         )
     }
 
     return (
-        <div className="max-w-2xl min-w-full xl:min-w-lg w-full lg:mx-auto p-6 flex flex-col gap-6 bg-white rounded-xl ring-[4px] border-2 border-pink-500 ring-pink-500/25">
+        <div className="max-w-2xl min-w-full xl:min-w-lg w-full lg:mx-auto p-6 flex flex-col gap-6 bg-white rounded-xl ring-[4px] border-2 border-blue-500 ring-blue-500/25">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-zinc-900">Cake NFT Bakery</h2>
+                <h2 className="text-xl font-semibold text-zinc-900">Craft NFT Workshop</h2>
             </div>
 
             <div className="space-y-6">
                 <div className="bg-white border border-zinc-300 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-zinc-900 mb-3">Bake a New Cake NFT</h3>
+                    <h3 className="text-sm font-medium text-zinc-900 mb-3">Craft a New NFT</h3>
 
                     <button
-                        className="cursor-pointer flex items-center justify-center w-full py-3 rounded-[9px] text-white transition-colors font-semibold relative border bg-pink-500 hover:bg-pink-600 border-pink-500"
-                        onClick={handleBakeCake}
-                        disabled={isBakePending || isBakeConfirming}
+                        className="cursor-pointer flex items-center justify-center w-full py-3 rounded-[9px] text-white transition-colors font-semibold relative border bg-blue-500 hover:bg-blue-600 border-blue-500"
+                        onClick={handleCraftNft}
+                        disabled={isCraftPending || isCraftConfirming}
                     >
                         {/* Gradient */}
                         <div className="absolute w-full inset-0 bg-gradient-to-b from-white/25 via-80% to-transparent mix-blend-overlay z-10 rounded-lg" />
@@ -220,13 +241,13 @@ export default function NFTContractForm({ contractAddress }: NFTContractFormProp
                         <div className="absolute w-full inset-0 mix-blend-overlay z-10 inner-shadow rounded-lg" />
                         {/* White inner border */}
                         <div className="absolute w-full inset-0 mix-blend-overlay z-10 border-[1.5px] border-white/20 rounded-lg" />
-                        {getBakeCakeButtonContent()}
+                        {getCraftNftButtonContent()}
                     </button>
 
                     {lastMintedTokenId && (
                         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                             <p className="text-sm text-green-700">
-                                <span className="font-medium">Successfully minted!</span>
+                                <span className="font-medium">Successfully crafted!</span>
                                 <br />
                                 {lastMintedTokenId}
                             </p>

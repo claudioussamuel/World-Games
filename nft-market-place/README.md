@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NFT Marketplace
+
+A decentralized NFT marketplace built with Next.js, Privy, and Viem. This marketplace allows users to mint, list, and trade NFTs across multiple blockchain networks.
+
+## Features
+
+- 🔗 **Multi-wallet Support**: Connect with various wallets via Privy
+- 🎨 **NFT Minting**: Create new Cake NFTs with custom metadata
+- 🛒 **Marketplace**: List and buy NFTs with USDC payments
+- 🌐 **Multi-chain**: Support for Anvil, Sepolia, Mainnet, Base Sepolia, Base, Lisk Sepolia, and Lisk
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Blockchain**: Viem, Privy
+- **State Management**: TanStack Query
+- **Icons**: React Icons
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd nft-market-place
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env.local` file with your configuration:
+   ```bash
+   NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id_here
+   ```
+
+   See [SETUP.md](./SETUP.md) for detailed configuration options.
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── buy-nft/           # NFT purchase pages
+│   ├── cake-nft/          # NFT minting page
+│   ├── list-nft/          # NFT listing page
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   ├── CakeNft.tsx       # NFT minting component
+│   ├── Header.tsx        # Navigation header
+│   ├── ListNftForm.tsx   # NFT listing form
+│   ├── NFTBox.tsx        # NFT display component
+│   └── RecentlyListed.tsx # Marketplace listings
+├── hooks/                # Custom React hooks
+│   └── useViemWithPrivy.ts # Blockchain interaction hook
+├── lib/                  # Utility libraries
+├── utils/                # Helper functions
+├── constants.ts          # Contract addresses and ABIs
+└── public/              # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Smart Contracts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The marketplace interacts with two main smart contracts:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### NFT Contract (CakeNft)
+- `mint(tokenURI)`: Mint a new NFT
+- `tokenURI(tokenId)`: Get metadata URI
+- `ownerOf(tokenId)`: Get token owner
 
-## Learn More
+### Marketplace Contract
+- `listItem(nftAddress, tokenId, price)`: List NFT for sale
+- `buyItem(nftAddress, tokenId)`: Purchase NFT
+- `getListing(nftAddress, tokenId)`: Get listing details
+- `cancelListing(nftAddress, tokenId)`: Cancel listing
 
-To learn more about Next.js, take a look at the following resources:
+## Supported Networks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Anvil (Local)**: For development and testing
+- **Sepolia**: Ethereum testnet
+- **Mainnet**: Ethereum mainnet
+- **Base Sepolia**: Base testnet
+- **Base**: Base mainnet
+- **Lisk Sepolia**: Lisk testnet
+- **Lisk**: Lisk mainnet
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License.
+
+## Support
+
+For questions and support, please refer to the [SETUP.md](./SETUP.md) file or create an issue in the repository.

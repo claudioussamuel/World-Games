@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { parseEther } from "viem"
-import { chainsToContracts, nftAbi, marketplaceAbi } from "@/constants"
+import { CONTRACT_ADDRESSES, nftAbi, marketplaceAbi } from "@/constants"
 import NFTBox from "@/components/NFTBox"
 import { addDecimalsToPrice } from "../utils/formatPrice"
 import { useViemWithPrivy } from "@/hooks/useViemWithPrivy"
@@ -15,11 +15,11 @@ export default function ListNftForm() {
         currentChain, 
         readContract, 
         writeContract, 
-        waitForTransactionReceipt 
+        waitForTransactionReceipt,
+        getContractInstance
     } = useViemWithPrivy()
     
-    const marketplaceAddress =
-        (chainsToContracts[currentChain.id]?.nftMarketplace as `0x${string}`) || "0x"
+    const marketplaceAddress = CONTRACT_ADDRESSES.nftMarketplace as `0x${string}`
 
     const [nftAddress, setNftAddress] = useState("")
     const [tokenId, setTokenId] = useState("")
@@ -85,12 +85,22 @@ export default function ListNftForm() {
         setApprovalError(null)
 
         try {
-            const hash = await writeContract(
+            // Get contract instance using JustPay pattern
+            const contract = await getContractInstance(
                 nftAddress as `0x${string}`,
-                nftAbi,
-                "approve",
-                [marketplaceAddress, BigInt(tokenId)]
+                nftAbi
             )
+            
+            if (!contract) {
+                throw new Error("Failed to get contract instance")
+            }
+
+            // Direct contract write call (JustPay pattern)
+            const hash = await contract.write.approve([
+                marketplaceAddress, 
+                BigInt(tokenId)
+            ])
+            
             setApprovalHash(hash)
             
             // Wait for transaction receipt
@@ -116,12 +126,24 @@ export default function ListNftForm() {
 
         try {
             const formattedPrice = addDecimalsToPrice(price)
-            const hash = await writeContract(
+            
+            // Get contract instance using JustPay pattern
+            const contract = await getContractInstance(
                 marketplaceAddress,
-                marketplaceAbi,
-                "listItem",
-                [nftAddress as `0x${string}`, BigInt(tokenId), formattedPrice]
+                marketplaceAbi
             )
+            
+            if (!contract) {
+                throw new Error("Failed to get contract instance")
+            }
+
+            // Direct contract write call (JustPay pattern)
+            const hash = await contract.write.listItem([
+                nftAddress as `0x${string}`, 
+                BigInt(tokenId), 
+                formattedPrice
+            ])
+            
             setListingHash(hash)
             
             // Wait for transaction receipt

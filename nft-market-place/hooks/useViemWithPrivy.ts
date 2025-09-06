@@ -1,81 +1,78 @@
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useCallback, useMemo } from "react";
 import { 
     createWalletClient, 
     createPublicClient, 
     http, 
     getContract,
+    custom,
     type Address,
     type Hash,
     type PublicClient,
     type WalletClient
 } from "viem";
-import { anvil, sepolia, mainnet } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
-// Get the appropriate RPC URL based on the chain
-const getRpcUrl = (chainId: number) => {
-    switch (chainId) {
-        case anvil.id:
-            return "http://127.0.0.1:8545";
-        case sepolia.id:
-            return process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || `https://eth-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`;
-        case mainnet.id:
-            return process.env.NEXT_PUBLIC_MAINNET_RPC_URL || `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`;
-        default:
-            return "http://127.0.0.1:8545";
-    }
+// Base Sepolia RPC URL
+const getRpcUrl = () => {
+    return process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
 };
 
 export function useViemWithPrivy() {
     const { user, authenticated } = usePrivy();
+    const { wallets } = useWallets();
 
-    // Get the current chain from Privy
-    const currentChain = useMemo(() => {
-        if (!user?.wallet?.chainId) return anvil;
-        
-        switch (user.wallet.chainId) {
-            case anvil.id:
-                return anvil;
-            case sepolia.id:
-                return sepolia;
-            case mainnet.id:
-                return mainnet;
-            default:
-                return anvil;
-        }
-    }, [user?.wallet?.chainId]);
+    // Always use Base Sepolia
+    const currentChain = baseSepolia;
 
     // Create public client for reading
     const publicClient = useMemo(() => {
-        const rpcUrl = getRpcUrl(currentChain.id);
+        const rpcUrl = getRpcUrl();
         return createPublicClient({
             chain: currentChain,
             transport: http(rpcUrl),
         });
     }, [currentChain]);
 
-    // Create wallet client for writing transactions
-    const walletClient = useMemo(() => {
-        if (!authenticated || !user?.wallet) return null;
-        
-        const rpcUrl = getRpcUrl(currentChain.id);
+    // Create wallet client for writing transactions (JustPay pattern)
+    const createWalletClientForTransaction = useCallback(async () => {
+        if (!wallets || wallets.length === 0) {
+            throw new Error("No wallet connected");
+        }
+
+        const wallet = wallets[0];
+        if (!wallet) {
+            throw new Error("Wallet is undefined");
+        }
+
+        const provider = await wallet.getEthereumProvider();
+        if (!provider) {
+            throw new Error("Provider is undefined");
+        }
+
+        // Check and switch chain if needed
+        const currentChainId = await provider.request({ method: "eth_chainId" });
+        if (currentChainId !== `0x${currentChain.id.toString(16)}`) {
+            await wallet.switchChain(currentChain.id);
+        }
+
         return createWalletClient({
             chain: currentChain,
-            transport: http(rpcUrl),
-            account: user.wallet.address as Address,
+            transport: custom(provider),
+            account: user?.wallet?.address as Address,
         });
-    }, [authenticated, user?.wallet, currentChain]);
+    }, [wallets, currentChain, user?.wallet?.address]);
 
-    // Get contract instance
-    const getContractInstance = useCallback((address: Address, abi: any) => {
-        if (!walletClient) return null;
+    // Get contract instance (JustPay pattern)
+    const getContractInstance = useCallback(async (address: Address, abi: any) => {
+        const walletClient = await createWalletClientForTransaction();
         
         return getContract({
             address,
             abi,
             client: walletClient,
         });
-    }, [walletClient]);
+    }, [createWalletClientForTransaction]);
 
     // Read contract function
     const readContract = useCallback(async (
@@ -90,26 +87,21 @@ export function useViemWithPrivy() {
             address,
             abi,
             functionName,
-            args,
+            args: args || [],
         });
     }, [publicClient]);
 
-    // Write contract function
+    // Write contract function (JustPay pattern)
     const writeContract = useCallback(async (
         address: Address,
         abi: any,
         functionName: string,
         args?: any[]
     ): Promise<Hash> => {
-        if (!walletClient) throw new Error("Wallet client not available");
+        const contract = await getContractInstance(address, abi);
         
-        return await walletClient.writeContract({
-            address,
-            abi,
-            functionName,
-            args,
-        });
-    }, [walletClient]);
+        return await contract.write[functionName](args || []);
+    }, [getContractInstance]);
 
     // Wait for transaction receipt
     const waitForTransactionReceipt = useCallback(async (hash: Hash) => {
@@ -123,7 +115,7 @@ export function useViemWithPrivy() {
         user,
         currentChain,
         publicClient,
-        walletClient,
+        createWalletClientForTransaction,
         getContractInstance,
         readContract,
         writeContract,

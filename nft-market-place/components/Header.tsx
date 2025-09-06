@@ -33,11 +33,11 @@ export default function Header() {
               
             </div>
           
-            {/* <a href="/cake-nft" className="flex items-center gap-1 text-zinc-800">
+            <a href="/craft-nft" className="flex items-center gap-1 text-zinc-800">
                 <h1 className="flex items-center justify-center gap-1 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-md shadow-sm transition-colors duration-200 border border-zinc-300">
-                    Cake NFT
+                    Craft NFT
                 </h1>
-            </a> */}
+            </a>
             <div className="flex items-center gap-4">
                 <button
                     onClick={handleAuth}

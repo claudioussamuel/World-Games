@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
-import { cakeAbi } from "../constants"
+import { craftAbi } from "../constants"
 import formatPrice from "../utils/formatPrice"
 import { useViemWithPrivy } from "@/hooks/useViemWithPrivy"
 
@@ -30,7 +30,7 @@ export default function NFTBox({ tokenId, contractAddress, price }: NFTBoxProps)
                     setTokenURIError(null)
                     const tokenURI = await readContract(
                         contractAddress as `0x${string}`,
-                        cakeAbi,
+                        craftAbi,
                         "tokenURI",
                         [BigInt(tokenId)]
                     )
@@ -84,7 +84,7 @@ export default function NFTBox({ tokenId, contractAddress, price }: NFTBoxProps)
                 ) : imageError || tokenURIError || !nftImageUrl ? (
                     // Fallback to local placeholder when there's an error
                     <Image
-                        src="/placeholder.png"
+                        src="/placeholder.svg"
                         alt={`NFT ${tokenId}`}
                         fill
                         className="object-cover"

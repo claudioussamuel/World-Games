@@ -4,12 +4,9 @@ pragma solidity ^0.8.19;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
 contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    
-    Counters.Counter private _tokenIdCounter;
+    uint256 private _tokenIdCounter;
     
     // Events
     event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenURI);
@@ -33,8 +30,8 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
             revert InvalidTokenURI();
         }
         
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
         
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenURI);
@@ -53,8 +50,8 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
             revert InvalidTokenURI();
         }
         
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
         
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, tokenURI);
@@ -69,7 +66,7 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
      * @param newTokenURI The new token URI
      */
     function updateTokenURI(uint256 tokenId, string memory newTokenURI) public  {
-        if (!_exists(tokenId)) {
+        if (_ownerOf(tokenId) == address(0)) {
             revert TokenDoesNotExist();
         }
         if (bytes(newTokenURI).length == 0) {
@@ -94,8 +91,8 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
                 revert InvalidTokenURI();
             }
             
-            uint256 tokenId = _tokenIdCounter.current();
-            _tokenIdCounter.increment();
+            uint256 tokenId = _tokenIdCounter;
+            _tokenIdCounter++;
             
             _safeMint(to, tokenId);
             _setTokenURI(tokenId, tokenURIs[i]);
@@ -112,7 +109,7 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
      * @return The current token counter value
      */
     function getCurrentTokenId() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
     
     /**
@@ -120,7 +117,7 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
      * @return The total number of minted tokens
      */
     function totalSupply() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
     
     /**
@@ -129,7 +126,7 @@ contract CraftNFT is ERC721, ERC721URIStorage, Ownable {
      * @return True if the token exists, false otherwise
      */
     function exists(uint256 tokenId) public view returns (bool) {
-        return _exists(tokenId);
+        return _ownerOf(tokenId) != address(0);
     }
     
     // Required overrides for multiple inheritance

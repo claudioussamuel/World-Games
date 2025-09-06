@@ -2,17 +2,12 @@
 "use client"
 
 import { usePrivy } from "@privy-io/react-auth"
-import { chainsToContracts } from "@/constants"
+// Removed chainsToContracts import - using Base Sepolia only
 import ListNftForm from "@/components/ListNftForm"
 
 export default function ListNftPage() {
     const { authenticated, user } = usePrivy()
-    const chainSupported =
-        user?.wallet?.chainId && 
-        user.wallet.chainId in chainsToContracts && 
-        chainsToContracts[user.wallet.chainId]?.nftMarketplace !== undefined
-
-    console.log(`user?.wallet?.chainId: ${user?.wallet?.chainId}`)
+    const chainSupported = user?.wallet?.address
    
     return (
         <div className="min-h-screen bg-zinc-50 flex flex-col">
@@ -39,7 +34,7 @@ export default function ListNftPage() {
                                 network.
                             </p>
                             <p className="text-sm text-zinc-500">
-                                Supported networks: Anvil, Sepolia, Mainnet {user?.wallet?.chainId}
+                                Please switch to Base Sepolia network
                             </p>
                         </div>
                     ) : (
